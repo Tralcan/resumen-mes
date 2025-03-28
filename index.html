@@ -1,5 +1,165 @@
-<heml>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Dragon -- Resumen por Mes</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: url('https://images.unsplash.com/flagged/photo-1556554946-c10ef755bded?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2d6a4f;
+            margin-bottom: 1.5rem;
+        }
+        h3 {
+            text-align: center;
+            color: black;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #1a3c34;
+            font-weight: bold;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #2d6a4f;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        #sportSummary {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+    </style>
+</head>
 <body>
-<p>Hola Mundo...</p>
+    <div class="container">
+        <h1>Team Dragon 🐲</h1>
+        <h3>Resumen por Mes</h3>
+        <div class="form-group">
+            <label for="monthSelector">Selecciona un mes:</label>
+            <select id="monthSelector">
+                <option value="01">Enero</option>
+                <option value="02">Febrero</option>
+                <option value="03">Marzo</option>
+                <option value="04">Abril</option>
+                <option value="05">Mayo</option>
+                <option value="06">Junio</option>
+                <option value="07">Julio</option>
+                <option value="08">Agosto</option>
+                <option value="09">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="yearSelector">Selecciona un año:</label>
+            <input type="number" id="yearSelector" min="2000" max="2100" step="1">
+        </div>
+        <div id="sportSummary"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Inicializa Supabase
+        const supabase = window.supabase.createClient(
+            'https://qqvkbwnyhjevrdyhvxbv.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxdmtid255aGpldnJkeWh2eGJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMwOTIxMTgsImV4cCI6MjA1ODY2ODExOH0.3ACxuOf_NWjzz0yYjxVPstVrG08pb1ulG-BNEofW6Yc'
+        );
+
+        // Elementos del DOM
+        const monthSelector = document.getElementById('monthSelector');
+        const yearSelector = document.getElementById('yearSelector');
+        const sportSummary = document.getElementById('sportSummary');
+
+        // Función para cargar el resumen por mes y año
+        async function fetchRecordsByMonth(year, month) {
+            const startOfMonth = `${year}-${month}-01T00:00:00Z`;
+            const endOfMonth = new Date(year, month, 0).toISOString().split('T')[0] + 'T23:59:59Z';
+
+            const { data, error } = await supabase
+                .from('formulario')
+                .select('deporte')
+                .gte('created_at', startOfMonth)
+                .lte('created_at', endOfMonth)
+                .order('deporte', { ascending: true });
+
+            if (error) {
+                console.error('Error al recuperar datos:', error);
+                sportSummary.innerHTML = '<p>Error al cargar los datos</p>';
+                return;
+            }
+
+            const records = data || [];
+            if (records.length === 0) {
+                sportSummary.innerHTML = '<p>No hay registros para este mes</p>';
+                return;
+            }
+
+            // Calcular el resumen por deporte
+            const sportCount = {};
+            records.forEach(record => {
+                sportCount[record.deporte] = (sportCount[record.deporte] || 0) + 1;
+            });
+
+            let summaryHTML = '<h4>Resumen por Deporte:</h4><ul>';
+            for (const [sport, count] of Object.entries(sportCount)) {
+                summaryHTML += `<li>${sport}: ${count} registro${count > 1 ? 's' : ''}</li>`;
+            }
+            summaryHTML += '</ul>';
+            sportSummary.innerHTML = summaryHTML;
+        }
+
+        // Función para manejar cambios en los selectores
+        function updateSummary() {
+            const selectedYear = yearSelector.value;
+            const selectedMonth = monthSelector.value;
+            if (selectedYear && selectedMonth) {
+                fetchRecordsByMonth(selectedYear, selectedMonth);
+            }
+        }
+
+        // Escuchar cambios en los selectores
+        monthSelector.addEventListener('change', updateSummary);
+        yearSelector.addEventListener('input', updateSummary);
+
+        // Establecer valores iniciales (mes y año actual)
+        const today = new Date();
+        monthSelector.value = String(today.getMonth() + 1).padStart(2, '0'); // Mes actual (01-12)
+        yearSelector.value = today.getFullYear(); // Año actual
+        fetchRecordsByMonth(today.getFullYear(), String(today.getMonth() + 1).padStart(2, '0'));
+    </script>
 </body>
 </html>
