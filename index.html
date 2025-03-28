@@ -35,6 +35,11 @@
             color: black;
             margin-bottom: 1rem;
         }
+         link {
+            text-align: center;
+            color: #2d6a4f;
+            margin-bottom: 1.5rem;
+        }
 
         .form-group {
             margin-bottom: 1rem;
@@ -48,7 +53,7 @@
         }
 
         select, input[type="number"] {
-            width: 100%;
+            width: 95%;
             padding: 0.8rem;
             border: 2px solid #2d6a4f;
             border-radius: 8px;
@@ -89,6 +94,7 @@
             <input type="number" id="yearSelector" min="2000" max="2100" step="1">
         </div>
         <div id="sportSummary"></div>
+        <a href="/consulta-fecha-supabase/" class="link">Consulta por día</a>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
